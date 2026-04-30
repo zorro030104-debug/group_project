@@ -1,35 +1,40 @@
 import numpy as np
 from student_env import MathTutorEnv, state_to_index
 
+
 NUM_STATES = 9
 NUM_ACTIONS = 2
 
+
 def choose_action(state_idx, q_table, epsilon):
     """
-    Choose an action using epsilon-greedy policy.
+    Epsilon-greedy action selection.
     """
     if np.random.rand() < epsilon:
         return np.random.choice(NUM_ACTIONS)
     else:
         return np.argmax(q_table[state_idx])
 
-def train_q_learning(
-    # OPTIMIZED: Increased training episodes from 1000 to 3000 for more stable learning.
+
+def train_sarsa(
     episodes=3000,
     alpha=0.1,
     gamma=0.95,
     epsilon=0.2,
     max_steps=30
 ):
+    """
+    Train a tabular SARSA agent.
+
+    SARSA is an on-policy RL algorithm.
+    It updates Q-values using the action actually selected
+    in the next state.
+    """
     env = MathTutorEnv(max_steps=max_steps)
     q_table = np.zeros((NUM_STATES, NUM_ACTIONS))
 
     episode_rewards = []
-
-    # OPTIMIZED: Added accuracy tracking for evaluation and visualization.
     episode_accuracy = []
-
-    # OPTIMIZED: Added final skill tracking to show learning outcome after each episode.
     final_add_skills = []
     final_sub_skills = []
 
@@ -37,40 +42,38 @@ def train_q_learning(
         state = env.reset()
         state_idx = state_to_index(state)
 
+        action = choose_action(state_idx, q_table, epsilon)
+
         total_reward = 0
-
-        # OPTIMIZED: Track correct answers in each episode.
         correct_count = 0
-
         done = False
 
         while not done:
-            action = choose_action(state_idx, q_table, epsilon)
-
             next_state, reward, done, info = env.step(action)
             next_state_idx = state_to_index(next_state)
 
+            next_action = choose_action(next_state_idx, q_table, epsilon)
+
+            # SARSA update:
+            # Q(s,a) <- Q(s,a) + alpha * [r + gamma * Q(s',a') - Q(s,a)]
             q_table[state_idx, action] = q_table[state_idx, action] + alpha * (
-                reward + gamma * np.max(q_table[next_state_idx]) - q_table[state_idx, action]
+                reward + gamma * q_table[next_state_idx, next_action]
+                - q_table[state_idx, action]
             )
 
             state_idx = next_state_idx
+            action = next_action
+
             total_reward += reward
 
-            # OPTIMIZED: Count correct answers to calculate episode accuracy.
             if info["correct"]:
                 correct_count += 1
 
         episode_rewards.append(total_reward)
-
-        # OPTIMIZED: Store accuracy for each episode.
         episode_accuracy.append(correct_count / max_steps)
-
-        # OPTIMIZED: Store final addition/subtraction skill levels for evaluation.
         final_add_skills.append(env.add_skill)
         final_sub_skills.append(env.sub_skill)
 
-    # OPTIMIZED: Return results as a dictionary so later evaluation/visualization is easier.
     results = {
         "rewards": episode_rewards,
         "accuracy": episode_accuracy,
