@@ -40,6 +40,9 @@ This formulation captures the sequential and uncertain nature of student learnin
 - Q-learning (off-policy)
 - SARSA (on-policy)
 
+Q-learning is first implemented to learn an effective tutoring policy and already outperforms baseline strategies. 
+We then introduce SARSA to compare on-policy and off-policy learning approaches and evaluate how different learning strategies perform in this tutoring environment.
+
 ### Baselines
 - Random policy
 - Weakest-skill heuristic
@@ -61,23 +64,36 @@ This formulation captures the sequential and uncertain nature of student learnin
 
 | Method      | Avg Reward |
 |------------|-----------|
-| SARSA      | ~18.14    |
-| Q-learning | ~17.21    |
-| Random     | ~12.67    |
-| Weakest    | ~11.76    |
+| Q-learning | ~20.7     |
+| SARSA      | ~19.7     |
+| Random     | ~16.2     |
+| Weakest    | ~15.7     |
 
 See the plots in `main.ipynb` for training curves and detailed comparisons.
+
+### Key Findings
+
+- Both reinforcement learning methods significantly outperform baseline strategies
+- Q-learning achieves slightly better performance than SARSA after environment refinement
+- Adaptive learning strategies outperform fixed heuristics such as Random and Weakest-skill
+
+### Additional Analysis
+
+The change in performance between Q-learning and SARSA highlights the impact of environment design.
+In earlier versions, SARSA performed better due to its conservative nature in uncertain environments.
+After refining the reward function and learning dynamics, the environment became more stable, allowing Q-learning to better approximate the optimal policy.
 
 ---
 
 ## Key Insights
 
-- Adaptive learning is more effective than static heuristics  
-- SARSA performs better due to its on-policy nature  
+- Adaptive learning is more effective than static heuristics
+- Both Q-learning and SARSA successfully learn effective tutoring strategies
+- After refining the environment and reward function, Q-learning achieves slightly better performance
+- This suggests that a more stable and structured environment benefits off-policy learning
 - RL balances:
-  - Reinforcing strengths  
-  - Addressing weaknesses  
-
+  - Reinforcing strengths
+  - Addressing weaknesses
 ---
 
 ## Project Structure

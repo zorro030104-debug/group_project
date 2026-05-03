@@ -55,6 +55,9 @@ class MathTutorEnv:
     def step(self, action):
         self.step_count += 1
 
+        old_total_skill = self.add_skill + self.sub_skill
+        old_gap = abs(self.add_skill - self.sub_skill)
+
         if action == 0:
             skill = self.add_skill
         elif action == 1:
@@ -62,21 +65,13 @@ class MathTutorEnv:
         else:
             raise ValueError("Invalid action. Use 0 for addition or 1 for subtraction.")
 
-        # OPTIMIZED: Added question difficulty so correctness depends on both student skill and task challenge.
-        difficulty = 0.05  # fixed difficulty for all questions, can be randomized or scaled with skill if desired
-
-        # OPTIMIZED: Probability of answering correctly is now skill-adjusted instead of using raw skill directly.
+        difficulty = 0.05
         prob_correct = skill - difficulty
-
-        # OPTIMIZED: Clip probability to avoid impossible values such as below 0 or above 1.
         prob_correct = np.clip(prob_correct, 0.05, 0.95)
 
         correct = np.random.rand() < prob_correct
 
-        # OPTIMIZED: Reduced skill increase after a correct answer to make learning more gradual and realistic.
         correct_gain = 0.04
-
-        # OPTIMIZED: Added smaller learning gain after an incorrect answer to reflect learning from mistakes.
         incorrect_gain = 0.01
 
         if action == 0:
@@ -93,9 +88,15 @@ class MathTutorEnv:
         self.add_skill = np.clip(self.add_skill, 0.0, 1.0)
         self.sub_skill = np.clip(self.sub_skill, 0.0, 1.0)
 
-        # OPTIMIZED: Changed reward from skill gain to performance-based reward.
-        # This better matches the tutoring goal: encourage questions the student can answer correctly.
-        reward = 1 if correct else -0.2
+        new_total_skill = self.add_skill + self.sub_skill
+        new_gap = abs(self.add_skill - self.sub_skill)
+
+        performance_reward = 1 if correct else -0.2
+        learning_gain = new_total_skill - old_total_skill
+        balance_gain = old_gap - new_gap
+
+        # OPTIMIZED: reward now considers correctness, learning progress, and balanced skill development.
+        reward = performance_reward + 5 * learning_gain + 2 * balance_gain
 
         next_state = self.get_state()
         done = self.step_count >= self.max_steps
@@ -104,9 +105,9 @@ class MathTutorEnv:
             "correct": correct,
             "add_skill": self.add_skill,
             "sub_skill": self.sub_skill,
-
-            # OPTIMIZED: Added prob_correct to help evaluate and debug the simulation.
-            "prob_correct": prob_correct
+            "prob_correct": prob_correct,
+            "learning_gain": learning_gain,
+            "balance_gain": balance_gain
         }
 
         return next_state, reward, done, info
